@@ -8,7 +8,7 @@ keywords = ["bioinformatics", "gff3", "transcriptome", "genome", "FASTA"]
 categories = ["science", "command-line-utilities"]
 
 license = "BSD-3-Clause"
-repository = "https://github.com/bourumir-wyngs/rs-opw-kinematics"
+repository = "https://github.com/bourumir-wyngs/thaf"
 readme = "README.md"
 
 [badges]
