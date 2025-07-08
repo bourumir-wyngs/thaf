@@ -5,7 +5,7 @@ edition = "2024"
 authors = ["Bourumir Wyngs <bourumir.wyngs [at] gmail.com>"]
 description = "Extracts transcript sequences and gene maps from genome FASTA files using GFF3 annotations."
 keywords = ["bioinformatics", "gff3", "transcriptome", "genome", "FASTA"]
-categories = ["science", "command-line-utilities"]
+categories = ["science", "science::bioinformatics", "science::bioinformatics::genomics", "command-line-utilities"]
 
 license = "BSD-3-Clause"
 repository = "https://github.com/bourumir-wyngs/thaf"
