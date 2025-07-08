@@ -1,4 +1,4 @@
-rs-opw-kinematics is available for use under the following license, commonly known
+Thaf is available for use under the following license, commonly known
 as the 3-clause (or "modified") BSD license:
 
 ==============================
@@ -27,7 +27,3 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ==============================
 
-Note: Documentation file opw.png is used from https://github.com/Jmeyer1292/opw_kinematics
-under the rights of  Apache License 2.0. This file exists for documentation
-purposes only (explaining the design of the robot) and is not used by complier
-when building the binaries (so aggregation).

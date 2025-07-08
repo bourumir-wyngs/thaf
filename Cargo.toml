@@ -1,0 +1,20 @@
+[package]
+name = "thaf"
+version = "0.0.1"
+edition = "2021"
+["Bourumir Wyngs <bourumir.wyngs [at] gmail.com>"]
+description = "Extracts transcript sequences and gene maps from genome FASTA files using GFF3 annotations."
+keywords = ["bioinformatics", "gff3", "transcriptome", "genome", "FASTA"]
+categories = ["science", "command-line-utilities"]
+
+license = "BSD-3-Clause"
+repository = "https://github.com/bourumir-wyngs/rs-opw-kinematics"
+readme = "README.md"
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+bio = "2.3"
