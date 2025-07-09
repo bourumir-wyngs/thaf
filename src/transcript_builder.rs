@@ -142,66 +142,6 @@ fn extract_transcript_sequence(
     Ok(sequence)
 }
 
-fn _extract_transcript_sequence(
-    genome: &HashMap<String, Vec<u8>>,
-    transcript: &Transcript,
-) -> Result<Vec<u8>> {
-    let chromosome_seq = genome.get(&transcript.chromosome).ok_or_else(|| {
-        anyhow::anyhow!(
-            "Chromosome '{}' not found in genome.",
-            transcript.chromosome
-        )
-    })?;
-
-    let mut sorted_regions = transcript.regions.clone();
-
-    match transcript.regions[0].strand {
-        Strand::Plus => sorted_regions.sort_by_key(|r| r.start),
-        Strand::Minus => sorted_regions.sort_by(|a, b| b.start.cmp(&a.start)),
-    }
-
-    let mut sequence = Vec::new();
-
-    // Extract sequences with debug annotations
-    for (index, region) in sorted_regions.iter().enumerate() {
-        let start = region.start - 1; // 0-based indexing
-        let end = region.end;         // exclusive at end
-
-        if end > chromosome_seq.len() {
-            anyhow::bail!(
-                "Region ({}-{}) in transcript {} exceeds chromosome length.",
-                region.start,
-                region.end,
-                transcript.id
-            );
-        }
-
-        // Insert debug start marker
-        let marker = match region.strand {
-            Strand::Plus => format!("[{}+:", index + 1),
-            Strand::Minus => format!("[{}-:", index + 1),
-        };
-        sequence.extend_from_slice(marker.as_bytes());
-
-        // Actual exon sequence
-        sequence.extend_from_slice(&chromosome_seq[start..end]);
-
-        // Insert debug end marker
-        let marker_end = match region.strand {
-            Strand::Plus => format!("{}+]", index + 1),
-            Strand::Minus => format!("{}-]", index + 1),
-        };
-        sequence.extend_from_slice(marker_end.as_bytes());
-    }
-
-    // Reverse complement if needed
-    if transcript.regions[0].strand == Strand::Minus {
-        sequence = dna::revcomp(sequence);
-    }
-
-    Ok(sequence)
-}
-
 /// Build transcriptome sequences and write to FASTA file.
 pub fn build_transcriptome_sequences(
     transcripts: &[Transcript],
