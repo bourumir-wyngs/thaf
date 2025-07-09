@@ -1,3 +1,7 @@
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/bourumir-wyngs/thaf/rust.yml)](https://github.com/bourumir-wyngs/thaf/actions)
+[![crates.io](https://img.shields.io/crates/v/thaf.svg)](https://crates.io/crates/thaf)
+[![crates.io](https://img.shields.io/crates/l/thaf.svg)](https://crates.io/crates/serde_yaml_bw)
+[![crates.io](https://img.shields.io/crates/d/thaf.svg)](https://crates.io/crates/serde_yaml_bw)
 # GFF3 Parser and Transcriptome Extractor
 
 ## Overview
