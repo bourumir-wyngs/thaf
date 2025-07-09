@@ -222,3 +222,63 @@ pub fn build_transcriptome_sequences(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn build_region(id: &str, start: usize, end: usize, strand: Strand) -> Region {
+        Region { id: id.to_string(), start, end, strand }
+    }
+
+    #[test]
+    fn test_transcript_sort_plus() {
+        let r1 = build_region("r1", 20, 25, Strand::Plus);
+        let r2 = build_region("r2", 10, 15, Strand::Plus);
+        let t = Transcript::new("tx1".into(), "chr1".into(), vec![r1, r2]).unwrap();
+        assert!(t.regions[0].start < t.regions[1].start);
+    }
+
+    #[test]
+    fn test_transcript_sort_minus() {
+        let r1 = build_region("r1", 10, 15, Strand::Minus);
+        let r2 = build_region("r2", 20, 25, Strand::Minus);
+        let t = Transcript::new("tx1".into(), "chr1".into(), vec![r1, r2]).unwrap();
+        assert!(t.regions[0].start > t.regions[1].start);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_transcript_overlap_panic() {
+        let r1 = build_region("r1", 10, 20, Strand::Plus);
+        let r2 = build_region("r2", 15, 25, Strand::Plus);
+        Transcript::new("tx1".into(), "chr1".into(), vec![r1, r2]).unwrap();
+    }
+
+    #[test]
+    fn test_extract_transcript_sequence_plus() {
+        let genome = HashMap::from([("chr1".to_string(), b"ACGTAACCGGTT".to_vec())]);
+        let regions = vec![build_region("r1", 1, 4, Strand::Plus), build_region("r2", 5, 8, Strand::Plus)];
+        let t = Transcript::new("tx1".into(), "chr1".into(), regions).unwrap();
+        let seq = extract_transcript_sequence(&genome, &t).unwrap();
+        assert_eq!(seq, b"ACGTAACC");
+    }
+
+    #[test]
+    fn test_extract_transcript_sequence_minus() {
+        let genome = HashMap::from([("chr1".to_string(), b"ACGTAACCGGTT".to_vec())]);
+        let regions = vec![build_region("r1", 1, 4, Strand::Minus), build_region("r2", 5, 8, Strand::Minus)];
+        let t = Transcript::new("tx1".into(), "chr1".into(), regions).unwrap();
+        let seq = extract_transcript_sequence(&genome, &t).unwrap();
+        assert_eq!(seq, b"GGTTACGT");
+    }
+
+    #[test]
+    fn test_build_transcripts_from_regions() {
+        let trs = vec![TranscriptRegion { chromosome: "chr1".into(), start: 1, end: 3, strand: Strand::Plus, transcript_id: "tx1".into(), region_id: "r1".into(), gene_id: None },
+                        TranscriptRegion { chromosome: "chr1".into(), start: 5, end: 6, strand: Strand::Plus, transcript_id: "tx1".into(), region_id: "r2".into(), gene_id: None }];
+        let ts = build_transcripts_from_regions(trs).unwrap();
+        assert_eq!(ts.len(), 1);
+        assert_eq!(ts[0].regions.len(), 2);
+    }
+}

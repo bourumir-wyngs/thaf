@@ -19,3 +19,6 @@ anyhow = "1.0"
 clap = { version = "4.5", features = ["derive"] }
 bio = "2.3"
 log = "0.4.27"
+
+[dev-dependencies]
+tempfile = "3"
