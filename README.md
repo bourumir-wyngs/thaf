@@ -34,11 +34,11 @@ thaf \
 * `-f, --gff3 <INPUT_GFF3>`: Path to the input GFF3 annotation file.
 * `-d, --dna <DNA_FASTA>`: Path to the input genome FASTA file.
 * `-t, --transcriptome <OUTPUT_FASTA>`: Path to the output transcriptome FASTA file.
-* `-e, --features <FEATURES>`: Comma-separated list of GFF3 features to extract (default: exon).
 
 ### Optional Arguments
 
 * `-g, --genemap <GENEMAP_FILE>`: Path to the output TSV file for transcript-to-gene mapping.
+* `-e, --features <FEATURES>`: Comma-separated list of GFF3 features to extract (default: exon). 
 
 ## Example
 
