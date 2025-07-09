@@ -16,8 +16,8 @@
 
 ### Command-Line Arguments
 
-```
-gff3_parser \
+```bash
+thaf \
   -f <INPUT_GFF3> \
   -d <DNA_FASTA> \
   -t <OUTPUT_FASTA> \
@@ -37,7 +37,7 @@ gff3_parser \
 ## Example
 
 ```bash
-gff3_parser \
+thaf \
   -f annotations.gff3 \
   -d genome.fa \
   -t transcriptome.fa \
@@ -51,9 +51,9 @@ This will produce:
 
 This small project was inspired by a segmentation fault encountered while using one of the popular tools, and the lack of any readily available tool capable of producing even a simple `genemap` table.
 
-Sequence boundaries, exon order, and reverse-complementation have been validated against outputs from `gffread`, which unfortunately does not produce a `genemap`. **thaf** checks for obvious inconsistencies, such as overlapping exons or exons belonging to different strands or chromosomes.
+Sequence boundaries, exon order, and reverse-complementation have been validated against outputs from `gffread`, which unfortunately does not produce a `genemap`. `thaf` checks for obvious inconsistencies, such as overlapping exons or exons belonging to different strands or chromosomes.
 
-Unlike `gffread`, **thaf** loads the entire genome into memory. As a result, it cannot handle extremely large genomes, such as that of the fern *Tmesipteris oblanceolata* (~160 Gb). However, a typical 32 Gb workstation is enough for processing the crop and plant genomes we commonly work with, and the simpler algorithm should make the code easier to maintain.
+Unlike `gffread`, `thaf` loads the entire genome into memory. As a result, it cannot handle extremely large genomes, such as that of the fern *Tmesipteris oblanceolata* (~160 Gb). However, a typical 32 Gb workstation is enough for processing the crop and plant genomes we commonly work with, and the simpler algorithm should make the code easier to maintain.
 
 We are grateful to the [**rust-bio**](https://crates.io/crates/bio) package, which provides exon overlap detection and reverse-complement functionality.
 
