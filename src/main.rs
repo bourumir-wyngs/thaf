@@ -11,6 +11,7 @@ fn feature_synonyms() -> Vec<String> {
     // We could support various other synonyms here as well or introduce a CLI parameter.
     // Will be seen.
     let v = vec!["exon"];
+    //let v = vec!["CDS"];
     v.iter().map(|s| s.to_string()).collect()
 }
 
@@ -50,6 +51,14 @@ fn main() -> Result<()> {
                 .help("Output FASTA file for transcript sequences")
                 .required(true),
         )
+        .arg(
+            Arg::new("features")
+                .short('e')
+                .long("features")
+                .value_name("FEATURES")
+                .help("Features to extract (comma-separated, defaults to 'exon')")
+                .required(false),
+        )        
         .arg_required_else_help(true)
         .get_matches();
 
@@ -57,10 +66,16 @@ fn main() -> Result<()> {
     let dna_fasta = matches.get_one::<String>("dna").unwrap();
     let transcriptome_fasta = matches.get_one::<String>("transcriptome").unwrap();
     let genemap_file = matches.get_one::<String>("genemap");
+    let features: Vec<String> = matches
+        .get_one::<String>("features")
+        .map(|s| s.split(',').map(|item| item.trim().to_string()).collect())
+        .unwrap_or_else(|| vec!["exon".to_string()]);
+    
+    println!("  Features: {:?}", features);
 
     // Parsing regions from GFF3
     let regions = parse_gff3_to_regions(input_file, 
-                                        &feature_synonyms())?;
+                                        &features)?;
 
     // Optionally write genemap
     if let Some(genemap_path) = genemap_file {

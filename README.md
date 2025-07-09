@@ -22,6 +22,7 @@ thaf \
   -d <DNA_FASTA> \
   -t <OUTPUT_FASTA> \
   [-g <GENEMAP_FILE>]
+  [-e <FEATURES>]
 ```
 
 ### Required Arguments
@@ -29,6 +30,7 @@ thaf \
 * `-f, --gff3 <INPUT_GFF3>`: Path to the input GFF3 annotation file.
 * `-d, --dna <DNA_FASTA>`: Path to the input genome FASTA file.
 * `-t, --transcriptome <OUTPUT_FASTA>`: Path to the output transcriptome FASTA file.
+* `-e, --features <FEATURES>`: Comma-separated list of GFF3 features to extract (default: exon).
 
 ### Optional Arguments
 
@@ -42,6 +44,7 @@ thaf \
   -d genome.fa \
   -t transcriptome.fa \
   -g genemap.tsv
+  -e CDS
 ```
 
 This will produce:

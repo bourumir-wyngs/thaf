@@ -4,6 +4,7 @@ use bio::alphabets::dna;
 use bio::data_structures::interval_tree::IntervalTree;
 use bio::io::fasta;
 use std::collections::HashMap;
+use log::error;
 
 impl Transcript {
     pub fn new(id: String, chromosome: String, mut regions: Vec<Region>) -> Result<Self> {
@@ -27,9 +28,15 @@ impl Transcript {
         let mut interval_tree: IntervalTree<usize, &Region> = IntervalTree::new();
 
         for region in &regions {
+            if region.start > region.end {
+                panic!("Negative width region {}..{}, region {} strand {}", region.start, region.end, region.id, region.strand);
+            } else if region.end - region.start + 1 <= 3 {
+                println!("  Suspicious: {} is only {} nucleoptide length: {} .. {}"
+                    , region.id, region.end - region.start + 1, region.start, region.end);
+            }
             let interval = region.start..region.end + 1; // bio uses half-open intervals
             if let Some(overlap) = interval_tree.find(interval.clone()).next() {
-                anyhow::bail!(
+                panic!(
                     "Transcript {} in chromosome {} has overlapping regions: {} and {} overlap with interval {:?}.",
                     id,
                     chromosome,
@@ -63,7 +70,7 @@ pub fn build_transcripts_from_regions(
 
         // Sanity-check chromosome consistency
         if entry.0 != tr.chromosome {
-            anyhow::bail!(
+            panic!(
                 "Transcript {} has regions from multiple chromosomes: {} vs {}",
                 tr.transcript_id,
                 entry.0,
