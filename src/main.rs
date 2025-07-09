@@ -8,8 +8,8 @@ use anyhow::Result;
 use clap::{Arg, Command};
 
 fn main() -> Result<()> {
-    let matches = Command::new("gff3_parser")
-        .version("1.4")
+    let matches = Command::new("thaf")
+        .version("0.0.2")
         .about("Extract transcript sequences from genome FASTA based on GFF3 annotations.")
         .arg(
             Arg::new("gff3")
