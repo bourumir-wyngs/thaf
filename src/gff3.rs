@@ -114,3 +114,28 @@ fn parse_attributes(attr_str: &str) -> HashMap<String, String> {
         .collect()
 }
 
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_parse_attributes_basic() {
+        let attrs = parse_attributes("ID=exon1;Parent=tx1;");
+        assert_eq!(attrs.get("ID"), Some(&"exon1".to_string()));
+        assert_eq!(attrs.get("Parent"), Some(&"tx1".to_string()));
+    }
+
+    #[test]
+    fn test_parse_gff3_to_regions_simple() {
+        use std::io::Write;
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        writeln!(file, "chr1	src	gene	1	10	.	+	.	ID=gene1;").unwrap();
+        writeln!(file, "chr1	src	mRNA	1	10	.	+	.	ID=tx1;Parent=gene1;").unwrap();
+        writeln!(file, "chr1	src	exon	1	5	.	+	.	ID=ex1;Parent=tx1;").unwrap();
+        writeln!(file, "chr1	src	exon	6	10	.	+	.	ID=ex2;Parent=tx1;").unwrap();
+        let path = file.path().to_str().unwrap().to_string();
+        let regions = parse_gff3_to_regions(&path, &vec!["exon".to_string()]).unwrap();
+        assert_eq!(regions.len(), 2);
+        assert_eq!(regions[0].transcript_id, "tx1");
+    }
+}
