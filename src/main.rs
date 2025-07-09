@@ -1,9 +1,5 @@
-mod transcript_builder;
-mod structures;
-mod gff3;
-
-use crate::gff3::{parse_gff3_to_regions, write_genemap};
-use crate::transcript_builder::{build_transcriptome_sequences, build_transcripts_from_regions};
+use thaf::gff3::{parse_gff3_to_regions, write_genemap};
+use thaf::transcript_builder::{build_transcriptome_sequences, build_transcripts_from_regions};
 use anyhow::Result;
 use clap::{Arg, Command};
 
