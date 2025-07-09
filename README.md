@@ -11,7 +11,7 @@
 ## Features
 
 * Parses GFF3 annotation files to identify transcript regions.
-* The feature to be extracted is currently 'exon', but this is easy to change in the code.
+* The default feature to be extracted is 'exon', but this is easy to change with the -e switch
 * Extracts transcript sequences directly from genome FASTA files.
 * Handles forward and reverse strands automatically.
 * Generates transcript-to-gene mapping files.
