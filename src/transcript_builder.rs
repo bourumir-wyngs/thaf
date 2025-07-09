@@ -4,7 +4,6 @@ use bio::alphabets::dna;
 use bio::data_structures::interval_tree::IntervalTree;
 use bio::io::fasta;
 use std::collections::HashMap;
-use log::error;
 
 impl Transcript {
     pub fn new(id: String, chromosome: String, mut regions: Vec<Region>) -> Result<Self> {

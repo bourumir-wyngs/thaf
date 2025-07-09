@@ -7,14 +7,6 @@ use crate::transcript_builder::{build_transcriptome_sequences, build_transcripts
 use anyhow::Result;
 use clap::{Arg, Command};
 
-fn feature_synonyms() -> Vec<String> {
-    // We could support various other synonyms here as well or introduce a CLI parameter.
-    // Will be seen.
-    let v = vec!["exon"];
-    //let v = vec!["CDS"];
-    v.iter().map(|s| s.to_string()).collect()
-}
-
 fn main() -> Result<()> {
     let matches = Command::new("gff3_parser")
         .version("1.4")
