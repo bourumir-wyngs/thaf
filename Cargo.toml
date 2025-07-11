@@ -1,6 +1,6 @@
 [package]
 name = "thaf"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2024"
 authors = ["Bourumir Wyngs <bourumir.wyngs [at] gmail.com>"]
 description = "Extracts transcript sequences and gene maps from genome FASTA files using GFF3 annotations."

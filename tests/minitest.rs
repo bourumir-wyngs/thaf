@@ -17,6 +17,11 @@ fn minimal_transcript_extraction() -> anyhow::Result<()> {
     {
         let mut gff = File::create(&gff3_path)?;
         writeln!(gff, "##gff-version 3")?;
+        writeln!(gff, "Super-Scaffold_197 SLAB mRNA 213511889 213514721 . + . ID=STRG.36498.1.p3;\
+Parent=STRG.36498;Name=ORF type:complete len:528 (-)%2Cscore%3D112.45%2Ctr|YYY|YYY|98.712|\
+0.0%2A|PF0YY93.17|8.5e-138%2CACP_syn_III_C|YYY|1.4e+04%2CACP_syn_III_C|PF08541.14|1.6e+04%2\
+CACP_syn_III_C|PF08541.14|4.9e+03%2CACP_syn_III_C|PF08541.14|5.9e-12%2CChal_sti_synt_C\
+|PF02797.19|1.7e-10%2CChal_sti_synt_N|PF00195.23|0.00047%2CACP_syn_III|PF08545.14|0.00078")?;
         writeln!(gff, "chr1\tsrc\tgene\t1\t20\t.\t+\t.\tID=g1")?;
         writeln!(gff, "chr1\tsrc\tmRNA\t1\t20\t.\t+\t.\tID=tx1;Parent=g1")?;
         writeln!(gff, "chr1\tsrc\texon\t1\t3\t.\t+\t.\tID=ex1;Parent=tx1")?;
