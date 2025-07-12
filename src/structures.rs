@@ -1,4 +1,5 @@
 use std::fmt;
+use crate::error::Error;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Strand {
@@ -7,11 +8,14 @@ pub enum Strand {
 }
 
 impl Strand {
-    pub fn from_char(x: char) -> Strand {
+    pub fn from_char(x: char, errors: &mut Vec<Error>) -> Option<Strand> {
         match x {
-            '+' => Strand::Plus,
-            '-' => Strand::Minus,
-            _ => panic!("Invalid strand [{x}]"),
+            '+' => Some(Strand::Plus),
+            '-' => Some(Strand::Minus),
+            _ => {
+                errors.push(Error::fatal(format!("Invalid strand [{x}]")));
+                None
+            }
         }
     }
 }

@@ -4,6 +4,8 @@ use tempfile::tempdir;
 use bio::io::fasta;
 use thaf::gff3::parse_gff3_to_regions;
 use thaf::transcript_builder::{build_transcriptome_sequences, build_transcripts_from_regions};
+use thaf::error::Error;
+use thaf::error::Severity;
 
 #[test]
 fn minimal_transcript_extraction() -> anyhow::Result<()> {
@@ -45,8 +47,11 @@ CACP_syn_III_C|PF08541.14|4.9e+03%2CACP_syn_III_C|PF08541.14|5.9e-12%2CChal_sti_
     }
 
     // Parse regions and build transcripts
-    let regions = parse_gff3_to_regions(gff3_path.to_str().unwrap(), &vec!["exon".into()])?;
-    let transcripts = build_transcripts_from_regions(regions)?;
+    let mut errors = Vec::<Error>::new();
+    let regions = parse_gff3_to_regions(gff3_path.to_str().unwrap(), &vec!["exon".into()], &mut errors)?;
+    let transcripts = build_transcripts_from_regions(regions, &mut errors);
+    assert_eq!(errors.len(), 4);
+    assert!(errors.iter().all(|e| matches!(e.severity, Severity::Warning)));
 
     // Build transcript sequences
     build_transcriptome_sequences(&transcripts, genome_path.to_str().unwrap(), transcriptome_path.to_str().unwrap())?;
