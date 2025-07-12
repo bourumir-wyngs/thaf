@@ -95,7 +95,13 @@ pub fn build_transcripts_from_regions(
     let mut transcripts = Vec::new();
 
     for (id, (chromosome, regions)) in transcript_map {
-        if let Some(transcript) = Transcript::new(id, chromosome, regions, errors) {
+        if let Some(transcript) = Transcript::new(id.clone(), chromosome, regions, errors) {
+            if transcript.regions.len() < 2 {
+                errors.push(Error::warning(format!(
+                    "Transcript {} has only one feature; skipping", id
+                )));
+                continue;
+            }
             transcripts.push(transcript);
         }
     }

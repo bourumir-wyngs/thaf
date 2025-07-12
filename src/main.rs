@@ -82,6 +82,11 @@ fn main() -> Result<()> {
     let regions = parse_gff3_to_regions(input_file,
                                         &features,
                                         &mut errors)?;
+    let gene_count = regions
+        .iter()
+        .filter_map(|r| r.gene_id.clone())
+        .collect::<std::collections::HashSet<_>>()
+        .len();
 
     // Optionally write genemap
     if let Some(genemap_path) = genemap_file {
@@ -90,9 +95,12 @@ fn main() -> Result<()> {
 
     // Build transcripts from regions
     let transcripts = build_transcripts_from_regions(regions, &mut errors);
+    let transcript_count = transcripts.len();
 
     // Extract and write transcript sequences
     build_transcriptome_sequences(&transcripts, dna_fasta, transcriptome_fasta)?;
+
+    println!("Produced {} transcripts from {} genes", transcript_count, gene_count);
 
     if let Some(path) = error_file {
         use std::fs::File;

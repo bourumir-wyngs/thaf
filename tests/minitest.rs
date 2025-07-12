@@ -50,8 +50,9 @@ CACP_syn_III_C|PF08541.14|4.9e+03%2CACP_syn_III_C|PF08541.14|5.9e-12%2CChal_sti_
     let mut errors = Vec::<Error>::new();
     let regions = parse_gff3_to_regions(gff3_path.to_str().unwrap(), &vec!["exon".into()], &mut errors)?;
     let transcripts = build_transcripts_from_regions(regions, &mut errors);
-    assert_eq!(errors.len(), 4);
+    assert_eq!(errors.len(), 5);
     assert!(errors.iter().all(|e| matches!(e.severity, Severity::Warning)));
+    assert_eq!(transcripts.len(), 2);
 
     // Build transcript sequences
     build_transcriptome_sequences(&transcripts, genome_path.to_str().unwrap(), transcriptome_path.to_str().unwrap())?;
@@ -66,7 +67,7 @@ CACP_syn_III_C|PF08541.14|4.9e+03%2CACP_syn_III_C|PF08541.14|5.9e-12%2CChal_sti_
 
     assert_eq!(seqs.get("tx1").unwrap(), "AAACCGG");
     assert_eq!(seqs.get("tx2").unwrap(), "CCGGTT");
-    assert_eq!(seqs.get("tx3").unwrap(), "GTT");
+    assert!(seqs.get("tx3").is_none());
 
     Ok(())
 }
