@@ -1,5 +1,5 @@
 <p>
-    <a href="https://verdanta.info/"><img src="https://verdanta.tech/verdanta_logo_small.jpg"
+    <a href="https://verdanta.info#oss/"><img src="https://verdanta.tech/verdanta_logo_small.jpg"
     alt="Relative median time vs baseline"
     width="100px"/>
     </a>
