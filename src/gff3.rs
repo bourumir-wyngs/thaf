@@ -1,15 +1,22 @@
+use crate::error::Error;
+use crate::structures::{Strand, TranscriptRegion};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter};
-use crate::structures::{Strand, TranscriptRegion};
 use std::io::Write;
+use std::io::{BufRead, BufReader, BufWriter};
 
-pub fn parse_gff3_to_regions(gff3_path: &str, feature_types: &Vec<String>) -> anyhow::Result<Vec<TranscriptRegion>> {
+pub fn parse_gff3_to_regions(
+    gff3_path: &str,
+    feature_types: &Vec<String>,
+    errors: &mut Vec<Error>,
+) -> anyhow::Result<Vec<TranscriptRegion>> {
     let feature_set: HashSet<&str> = feature_types.iter().map(|s| s.as_str()).collect();
     let reader = BufReader::new(File::open(gff3_path)?);
     let mut regions = Vec::new();
 
     let mut transcript_to_gene: HashMap<String, String> = HashMap::new();
+    let mut warn_missing_tx_parent = false;
+    let mut warn_missing_feature_parent = false;
 
     for line in reader.lines() {
         let line = line?;
@@ -26,7 +33,7 @@ pub fn parse_gff3_to_regions(gff3_path: &str, feature_types: &Vec<String>) -> an
         let feature_type = cols[2];
         let start = cols[3].parse::<usize>()?;
         let end = cols[4].parse::<usize>()?;
-        let strand = cols[6].chars().next().unwrap_or('.');
+        let strand_char = cols[6].chars().next().unwrap_or('.');
 
         let attributes = parse_attributes(cols[8]);
 
@@ -37,28 +44,52 @@ pub fn parse_gff3_to_regions(gff3_path: &str, feature_types: &Vec<String>) -> an
                 }
             }
             "mRNA" | "transcript" => {
-                if let (Some(transcript_id), Some(gene_id)) =
-                    (attributes.get("ID"), attributes.get("Parent"))
-                {
-                    transcript_to_gene.insert(transcript_id.clone(), gene_id.clone());
+                if let Some(transcript_id) = attributes.get("ID") {
+                    let gene_id = if let Some(parent) = attributes.get("Parent") {
+                        parent.clone()
+                    } else {
+                        if !warn_missing_tx_parent {
+                            errors.push(Error::warning(
+                                "Transcript entry missing Parent attribute; using transcript ID as gene ID",
+                            ));
+                            warn_missing_tx_parent = true;
+                        }
+                        transcript_id.clone()
+                    };
+                    transcript_to_gene.insert(transcript_id.clone(), gene_id);
                 }
             }
             feat if feature_set.contains(feat) => {
-                if let Some(transcript_id) = attributes.get("Parent") {
-                    let gene_id = transcript_to_gene.get(transcript_id).cloned();
-                    let region_id = if let Some(id) = attributes.get("ID") {
-                        id.clone()
-                    } else {
-                        panic!("Missing transcript id");
-                    };
+                let region_id = if let Some(id) = attributes.get("ID") {
+                    id.clone()
+                } else {
+                    errors.push(Error::fatal("Missing transcript id".to_string()));
+                    continue;
+                };
 
+                let transcript_id = if let Some(parent) = attributes.get("Parent") {
+                    parent.clone()
+                } else {
+                    if !warn_missing_feature_parent {
+                        errors.push(Error::warning(
+                            "Feature missing Parent attribute; using feature ID as transcript and gene ID",
+                        ));
+                        warn_missing_feature_parent = true;
+                    }
+                    transcript_to_gene.insert(region_id.clone(), region_id.clone());
+                    region_id.clone()
+                };
+
+                let gene_id = transcript_to_gene.get(&transcript_id).cloned();
+
+                if let Some(strand) = Strand::from_char(strand_char, errors) {
                     regions.push(TranscriptRegion {
                         chromosome,
                         start,
                         end,
                         region_id,
-                        strand: Strand::from_char(strand),
-                        transcript_id: transcript_id.clone(),
+                        strand,
+                        transcript_id,
                         gene_id,
                     });
                 }
@@ -114,10 +145,10 @@ fn parse_attributes(attr_str: &str) -> HashMap<String, String> {
         .collect()
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::Severity;
     #[test]
     fn test_parse_attributes_basic() {
         let attrs = parse_attributes("ID=exon1;Parent=tx1;");
@@ -134,8 +165,30 @@ mod tests {
         writeln!(file, "chr1	src	exon	1	5	.	+	.	ID=ex1;Parent=tx1;").unwrap();
         writeln!(file, "chr1	src	exon	6	10	.	+	.	ID=ex2;Parent=tx1;").unwrap();
         let path = file.path().to_str().unwrap().to_string();
-        let regions = parse_gff3_to_regions(&path, &vec!["exon".to_string()]).unwrap();
+        let mut errors = Vec::new();
+        let regions = parse_gff3_to_regions(&path, &vec!["exon".to_string()], &mut errors).unwrap();
+        assert!(errors.is_empty());
         assert_eq!(regions.len(), 2);
         assert_eq!(regions[0].transcript_id, "tx1");
+    }
+
+    #[test]
+    fn test_missing_parents() {
+        use std::io::Write;
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        writeln!(file, "chr1\tsrc\tmRNA\t1\t10\t.\t+\t.\tID=tx1").unwrap();
+        writeln!(file, "chr1\tsrc\texon\t1\t5\t.\t+\t.\tID=ex1;Parent=tx1").unwrap();
+        writeln!(file, "chr1\tsrc\texon\t6\t10\t.\t+\t.\tID=ex2").unwrap();
+        let path = file.path().to_str().unwrap().to_string();
+        let mut errors = Vec::new();
+        let regions = parse_gff3_to_regions(&path, &vec!["exon".to_string()], &mut errors).unwrap();
+        assert_eq!(regions.len(), 2);
+        assert!(
+            errors
+                .iter()
+                .any(|e| matches!(e.severity, Severity::Warning))
+        );
+        assert_eq!(regions[0].transcript_id, "tx1");
+        assert_eq!(regions[1].transcript_id, "ex2");
     }
 }

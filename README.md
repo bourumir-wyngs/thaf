@@ -45,7 +45,8 @@ thaf \
 ### Optional Arguments
 
 * `-g, --genemap <GENEMAP_FILE>`: Path to the output TSV file for transcript-to-gene mapping.
-* `-e, --features <FEATURES>`: Comma-separated list of GFF3 features to extract (default: exon). 
+* `-e, --features <FEATURES>`: Comma-separated list of GFF3 features to extract (default: exon).
+* `-r, --error <ERROR_LOG>`: Write warnings and errors to this file instead of standard output.
 
 ## Example
 
@@ -55,6 +56,7 @@ thaf \
   -d genome.fa \
   -t transcriptome.fa \
   -g genemap.tsv
+  -r run.log \
   -e CDS
 ```
 

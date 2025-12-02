@@ -4,17 +4,20 @@ use bio::alphabets::dna;
 use bio::data_structures::interval_tree::IntervalTree;
 use bio::io::fasta;
 use std::collections::HashMap;
+use crate::error::Error;
 
 impl Transcript {
-    pub fn new(id: String, chromosome: String, mut regions: Vec<Region>) -> Result<Self> {
+    pub fn new(id: String, chromosome: String, mut regions: Vec<Region>, errors: &mut Vec<Error>) -> Option<Self> {
         if regions.is_empty() {
-            anyhow::bail!("Transcript {} has no regions.", id);
+            errors.push(Error::fatal(format!("Transcript {} has no regions.", id)));
+            return None;
         }
 
         // Verify all regions have the same strand
         let first_strand = regions[0].strand;
         if regions.iter().any(|r| r.strand != first_strand) {
-            anyhow::bail!("Transcript {} has mixed strands.", id);
+            errors.push(Error::fatal(format!("Transcript {} has mixed strands.", id)));
+            return None;
         }
 
         // Sort regions depending on the strand
@@ -28,26 +31,27 @@ impl Transcript {
 
         for region in &regions {
             if region.start > region.end {
-                panic!("Negative width region {}..{}, region {} strand {}", region.start, region.end, region.id, region.strand);
+                errors.push(Error::fatal(format!("Negative width region {}..{}, region {} strand {}", region.start, region.end, region.id, region.strand)));
+                return None;
             } else if region.end - region.start + 1 <= 3 {
-                println!("  Suspicious: {} is only {} nucleoptide length: {} .. {}"
-                    , region.id, region.end - region.start + 1, region.start, region.end);
+                errors.push(Error::warning(format!("Suspicious: {} is only {} nucleoptide length: {} .. {}", region.id, region.end - region.start + 1, region.start, region.end)));
             }
             let interval = region.start..region.end + 1; // bio uses half-open intervals
             if let Some(overlap) = interval_tree.find(interval.clone()).next() {
-                panic!(
+                errors.push(Error::fatal(format!(
                     "Transcript {} in chromosome {} has overlapping regions: {} and {} overlap with interval {:?}.",
                     id,
                     chromosome,
                     region.id,
                     overlap.data().id,
                     overlap.interval()
-                );
+                )));
+                return None;
             }
             interval_tree.insert(interval, region);
         }
 
-        Ok(Self {
+        Some(Self {
             id,
             chromosome,
             regions,
@@ -58,7 +62,8 @@ impl Transcript {
 /// Build transcripts from a vector of TranscriptRegion structs.
 pub fn build_transcripts_from_regions(
     transcript_regions: Vec<TranscriptRegion>,
-) -> Result<Vec<Transcript>> {
+    errors: &mut Vec<Error>,
+) -> Vec<Transcript> {
     // Collect regions grouped by transcript ID
     let mut transcript_map: HashMap<String, (String, Vec<Region>)> = HashMap::new();
 
@@ -69,12 +74,13 @@ pub fn build_transcripts_from_regions(
 
         // Sanity-check chromosome consistency
         if entry.0 != tr.chromosome {
-            panic!(
+            errors.push(Error::fatal(format!(
                 "Transcript {} has regions from multiple chromosomes: {} vs {}",
                 tr.transcript_id,
                 entry.0,
                 tr.chromosome
-            );
+            )));
+            continue;
         }
 
         entry.1.push(Region {
@@ -89,11 +95,18 @@ pub fn build_transcripts_from_regions(
     let mut transcripts = Vec::new();
 
     for (id, (chromosome, regions)) in transcript_map {
-        let transcript = Transcript::new(id, chromosome, regions)?;
-        transcripts.push(transcript);
+        if let Some(transcript) = Transcript::new(id.clone(), chromosome, regions, errors) {
+            if transcript.regions.len() < 2 {
+                errors.push(Error::warning(format!(
+                    "Transcript {} has only one feature; skipping", id
+                )));
+                continue;
+            }
+            transcripts.push(transcript);
+        }
     }
 
-    Ok(transcripts)
+    transcripts
 }
 
 /// Load genome sequences into memory from FASTA file.
@@ -166,6 +179,7 @@ pub fn build_transcriptome_sequences(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::Severity;
 
     fn build_region(id: &str, start: usize, end: usize, strand: Strand) -> Region {
         Region { id: id.to_string(), start, end, strand }
@@ -175,7 +189,9 @@ mod tests {
     fn test_transcript_sort_plus() {
         let r1 = build_region("r1", 20, 25, Strand::Plus);
         let r2 = build_region("r2", 10, 15, Strand::Plus);
-        let t = Transcript::new("tx1".into(), "chr1".into(), vec![r1, r2]).unwrap();
+        let mut errors = Vec::new();
+        let t = Transcript::new("tx1".into(), "chr1".into(), vec![r1, r2], &mut errors).unwrap();
+        assert!(errors.is_empty());
         assert!(t.regions[0].start < t.regions[1].start);
     }
 
@@ -183,23 +199,29 @@ mod tests {
     fn test_transcript_sort_minus() {
         let r1 = build_region("r1", 10, 15, Strand::Minus);
         let r2 = build_region("r2", 20, 25, Strand::Minus);
-        let t = Transcript::new("tx1".into(), "chr1".into(), vec![r1, r2]).unwrap();
+        let mut errors = Vec::new();
+        let t = Transcript::new("tx1".into(), "chr1".into(), vec![r1, r2], &mut errors).unwrap();
+        assert!(errors.is_empty());
         assert!(t.regions[0].start > t.regions[1].start);
     }
 
     #[test]
-    #[should_panic]
-    fn test_transcript_overlap_panic() {
+    fn test_transcript_overlap_fails() {
         let r1 = build_region("r1", 10, 20, Strand::Plus);
         let r2 = build_region("r2", 15, 25, Strand::Plus);
-        Transcript::new("tx1".into(), "chr1".into(), vec![r1, r2]).unwrap();
+        let mut errors = Vec::new();
+        let res = Transcript::new("tx1".into(), "chr1".into(), vec![r1, r2], &mut errors);
+        assert!(res.is_none());
+        assert!(!errors.is_empty());
     }
 
     #[test]
     fn test_extract_transcript_sequence_plus() {
         let genome = HashMap::from([("chr1".to_string(), b"ACGTAACCGGTT".to_vec())]);
         let regions = vec![build_region("r1", 1, 4, Strand::Plus), build_region("r2", 5, 8, Strand::Plus)];
-        let t = Transcript::new("tx1".into(), "chr1".into(), regions).unwrap();
+        let mut errors = Vec::new();
+        let t = Transcript::new("tx1".into(), "chr1".into(), regions, &mut errors).unwrap();
+        assert!(errors.is_empty());
         let seq = extract_transcript_sequence(&genome, &t).unwrap();
         assert_eq!(seq, b"ACGTAACC");
     }
@@ -208,7 +230,9 @@ mod tests {
     fn test_extract_transcript_sequence_minus() {
         let genome = HashMap::from([("chr1".to_string(), b"ACGTAACCGGTT".to_vec())]);
         let regions = vec![build_region("r1", 1, 4, Strand::Minus), build_region("r2", 5, 8, Strand::Minus)];
-        let t = Transcript::new("tx1".into(), "chr1".into(), regions).unwrap();
+        let mut errors = Vec::new();
+        let t = Transcript::new("tx1".into(), "chr1".into(), regions, &mut errors).unwrap();
+        assert!(errors.is_empty());
         let seq = extract_transcript_sequence(&genome, &t).unwrap();
         assert_eq!(seq, b"GGTTACGT");
     }
@@ -217,7 +241,10 @@ mod tests {
     fn test_build_transcripts_from_regions() {
         let trs = vec![TranscriptRegion { chromosome: "chr1".into(), start: 1, end: 3, strand: Strand::Plus, transcript_id: "tx1".into(), region_id: "r1".into(), gene_id: None },
                         TranscriptRegion { chromosome: "chr1".into(), start: 5, end: 6, strand: Strand::Plus, transcript_id: "tx1".into(), region_id: "r2".into(), gene_id: None }];
-        let ts = build_transcripts_from_regions(trs).unwrap();
+        let mut errors = Vec::new();
+        let ts = build_transcripts_from_regions(trs, &mut errors);
+        assert_eq!(errors.len(), 2);
+        assert!(errors.iter().all(|e| matches!(e.severity, Severity::Warning)));
         assert_eq!(ts.len(), 1);
         assert_eq!(ts[0].regions.len(), 2);
     }
