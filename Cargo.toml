@@ -1,6 +1,6 @@
 [package]
 name = "thaf"
-version = "0.0.4"
+version = "0.0.5"
 edition = "2024"
 authors = ["Bourumir Wyngs <bourumir.wyngs [at] gmail.com>"]
 description = "Extracts transcript sequences and gene maps from genome FASTA files using GFF3 annotations."
@@ -17,7 +17,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 anyhow = "1.0"
 clap = { version = "4.5", features = ["derive"] }
-bio = "2.3"
+bio = "3.0.0"
 
 [dev-dependencies]
 tempfile = "3"
